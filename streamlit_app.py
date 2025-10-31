@@ -16,7 +16,7 @@ st.set_page_config(
     page_title="GovDoc - 公文格式转换工具",
     page_icon="📋",
     layout="centered",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",  # 隐藏侧边栏
     menu_items={
         'About': "GovDoc - 专业的政府公文格式转换工具 v1.0"
     }
@@ -249,51 +249,11 @@ st.markdown("""
 
 
 def main():
-    # 应用头部
+    # 简洁的头部
     st.markdown("""
-    <div class="app-header">
-        <div class="app-logo">📋</div>
-        <div class="app-title">GovDoc</div>
-        <div class="app-subtitle">专业的政府公文格式转换工具</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # 功能介绍
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown("""
-        <div style="text-align: center; padding: 1rem;">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;">✨</div>
-            <div style="font-weight: 600; color: #2d3748;">GB/T 9704-2012</div>
-            <div style="font-size: 0.9rem; color: #718096;">完全符合国标</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div style="text-align: center; padding: 1rem;">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚡</div>
-            <div style="font-weight: 600; color: #2d3748;">快速转换</div>
-            <div style="font-size: 0.9rem; color: #718096;">一键生成Word文档</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div style="text-align: center; padding: 1rem;">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎯</div>
-            <div style="font-weight: 600; color: #2d3748;">精准格式</div>
-            <div style="font-size: 0.9rem; color: #718096;">自动应用公文规范</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # 工作区标题
-    st.markdown("""
-    <div style="text-align: center; margin: 2rem 0 1rem 0;">
-        <h2 style="color: #2d3748; font-size: 1.8rem; margin-bottom: 0.5rem;">📝 工作台</h2>
-        <p style="color: #718096; font-size: 0.95rem;">在下方输入或上传Markdown内容，即可转换为公文格式</p>
+    <div style="text-align: center; padding: 1rem 0 0.5rem 0;">
+        <h1 style="color: #1a365d; font-size: 2rem; margin-bottom: 0.3rem; font-weight: 700;">GovDoc</h1>
+        <p style="color: #718096; font-size: 0.9rem; margin-bottom: 0;">Markdown 转政府公文格式 | 符合 GB/T 9704-2012 标准</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -413,88 +373,13 @@ def main():
                     else:
                         st.error("❌ 转换失败，请检查Markdown格式是否正确")
     
-    # Sidebar
-    with st.sidebar:
-        st.markdown("### 📚 使用指南")
-        st.markdown("""
-        **快速开始**
-        1. 选择上传文件或粘贴文本
-        2. 点击"转换并下载"按钮
-        3. 获得标准公文格式Word文档
-        """)
-        
-        st.markdown("---")
-        st.markdown("### 🎨 格式规范")
-        with st.expander("查看详情"):
-            st.markdown("""
-            **页面设置**
-            - 上边距: 37mm
-            - 下边距: 35mm
-            - 左边距: 28mm
-            - 右边距: 26mm
-            
-            **段落格式**
-            - 行距: 固定值28.8磅
-            - 首行缩进: 2字符
-            - 段前段后: 0
-            """)
-        
-        st.markdown("---")
-        st.markdown("### ℹ️ 关于")
-        st.markdown("""
-        **GovDoc v1.0**
-        
-        专业的政府公文格式转换工具，完全符合
-        《党政机关公文格式》GB/T 9704-2012标准。
-        
-        [👨‍💻 GitHub]( https://github.com/liusai0820/md2govdoc)
-        """)
     
-    
-    # 底部说明
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("---")
-    
+    # 简洁页脚
     st.markdown("""
-    <div style="text-align: center; padding: 2rem 0;">
-        <h3 style="color: #2d3748; margin-bottom: 1.5rem;">📝 支持的Markdown语法</h3>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("""
-        <div class="feature-card">
-            <h4 style="color: #2d3748; margin-bottom: 1rem;">标题格式</h4>
-            <ul style="list-style: none; padding-left: 0;">
-                <li style="margin: 0.5rem 0;"><code>#</code> 主标题 → 方正小标宋 22磅 加粗居中</li>
-                <li style="margin: 0.5rem 0;"><code>##</code> 一级标题 → 黑体 16磅</li>
-                <li style="margin: 0.5rem 0;"><code>###</code> 二级标题 → 楷体_GB2312 16磅 加粗</li>
-                <li style="margin: 0.5rem 0;"><code>####</code> 三级标题 → 楷体_GB2312 16磅</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="feature-card">
-            <h4 style="color: #2d3748; margin-bottom: 1rem;">文本格式</h4>
-            <ul style="list-style: none; padding-left: 0;">
-                <li style="margin: 0.5rem 0;"><code>-</code> 列表项 → 仿宋_GB2312 16磅</li>
-                <li style="margin: 0.5rem 0;"><code>**文本**</code> → 加粗</li>
-                <li style="margin: 0.5rem 0;"><code>*文本*</code> → 斜体</li>
-                <li style="margin: 0.5rem 0;">正文 → 仿宋_GB2312 16磅</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # 页脚
-    st.markdown("""
-    <div style="text-align: center; padding: 3rem 0 2rem 0; color: #718096; font-size: 0.9rem;">
-        <p>完全符合《党政机关公文格式》GB/T 9704-2012 国家标准</p>
-        <p style="margin-top: 0.5rem;">
-            Made with ❤️ by <a href="https://github.com/liusai0820/md2govdoc" target="_blank" style="color: #667eea; text-decoration: none;">GovDoc</a>
+    <div style="text-align: center; padding: 2rem 0 1rem 0; color: #a0aec0; font-size: 0.85rem;">
+        <p style="margin: 0.5rem 0;">支持标题、表格、列表、加粗、斜体 | 符合 GB/T 9704-2012 标准</p>
+        <p style="margin: 0.5rem 0;">
+            <a href="https://github.com/liusai0820/md2govdoc" target="_blank" style="color: #667eea; text-decoration: none;">GitHub</a>
         </p>
     </div>
     """, unsafe_allow_html=True)
