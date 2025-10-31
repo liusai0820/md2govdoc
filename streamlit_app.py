@@ -289,8 +289,129 @@ def main():
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # 创建标签页
-    tab1, tab2 = st.tabs(["📁 上传文件", "📝 粘贴文本"])
+    # 工作区标题
+    st.markdown("""
+    <div style="text-align: center; margin: 2rem 0 1rem 0;">
+        <h2 style="color: #2d3748; font-size: 1.8rem; margin-bottom: 0.5rem;">📝 工作台</h2>
+        <p style="color: #718096; font-size: 0.95rem;">在下方输入或上传Markdown内容，即可转换为公文格式</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 创建标签页（默认显示粘贴文本）
+    tab1, tab2 = st.tabs(["📝 粘贴文本", "📁 上传文件"])
+    
+    # 标签页1: 粘贴文本（默认）
+    with tab1:
+        st.markdown("")
+        st.info("💡 提示：可直接在下方文本框中粘贴或输入Markdown内容")
+        
+        markdown_text = st.text_area(
+            "Markdown内容",
+            height=450,
+            placeholder="# 关于加强公文格式管理的通知\n\n## 一、总体要求\n\n各单位要高度重视公文格式规范化工作，严格按照标准执行。\n\n## 二、具体措施\n\n### 1. 字体要求\n\n正文采用**仿宋_GB2312字体**，字号为三号（16磅）。\n\n### 2. 页面设置\n\n页边距设置如下：\n- 上边距：37毫米\n- 下边距：35毫米",
+            help="支持标准Markdown语法，包括标题、列表、表格、加粗、斜体等",
+            label_visibility="collapsed"
+        )
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        col1, col2 = st.columns([1, 3])
+        
+        with col1:
+            if st.button("🗑️ 清空", key="clear_text", use_container_width=True):
+                st.rerun()
+        
+        with col2:
+            if st.button("🚀 转换并下载", key="convert_text", use_container_width=True, type="primary"):
+                if not markdown_text.strip():
+                    st.error("❌ 请输入Markdown文本")
+                else:
+                    with st.spinner("正在转换中..."):
+                        # 创建临时文件
+                        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as tmp_input:
+                            tmp_input.write(markdown_text)
+                            input_path = tmp_input.name
+                        
+                        output_path = input_path.replace('.md', '.docx')
+                        
+                        # 转换文档
+                        success = convert_markdown_to_gov_docx(input_path, output_path)
+                        
+                        if success:
+                            # 读取生成的文件
+                            with open(output_path, 'rb') as f:
+                                docx_data = f.read()
+                            
+                            st.success("✅ 转换成功！")
+                            
+                            # 直接下载，不需要再点击
+                            st.download_button(
+                                label="📥 下载Word文档",
+                                data=docx_data,
+                                file_name="公文格式文档.docx",
+                                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                use_container_width=True
+                            )
+                            
+                            # 清理临时文件
+                            try:
+                                os.remove(input_path)
+                                os.remove(output_path)
+                            except:
+                                pass
+                        else:
+                            st.error("❌ 转换失败，请检查Markdown格式是否正确")
+    
+    # 标签页2: 上传文件
+    with tab2:
+        st.markdown("")
+        uploaded_file = st.file_uploader(
+            "选择Markdown文件",
+            type=['md', 'markdown', 'txt'],
+            help="支持 .md、.markdown、.txt 格式，文件大小不超过 200MB"
+        )
+        
+        if uploaded_file is not None:
+            st.success(f"✅ 已选择文件：**{uploaded_file.name}** ({uploaded_file.size / 1024:.1f} KB)")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            if st.button("🚀 转换并下载", key="convert_file", use_container_width=True):
+                with st.spinner("正在转换中..."):
+                    # 创建临时文件
+                    with tempfile.NamedTemporaryFile(mode='wb', suffix='.md', delete=False) as tmp_input:
+                        tmp_input.write(uploaded_file.getvalue())
+                        input_path = tmp_input.name
+                    
+                    output_path = input_path.replace('.md', '.docx')
+                    
+                    # 转换文档
+                    success = convert_markdown_to_gov_docx(input_path, output_path)
+                    
+                    if success:
+                        # 读取生成的文件
+                        with open(output_path, 'rb') as f:
+                            docx_data = f.read()
+                        
+                        st.success("✅ 转换成功！")
+                        
+                        # 直接下载
+                        st.download_button(
+                            label="📥 下载Word文档",
+                            data=docx_data,
+                            file_name="公文格式文档.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            use_container_width=True
+                        )
+                        
+                        # 清理临时文件
+                        try:
+                            os.remove(input_path)
+                            os.remove(output_path)
+                        except:
+                            pass
+                    else:
+                        st.error("❌ 转换失败，请检查Markdown格式是否正确")
     
     # Sidebar
     with st.sidebar:
@@ -329,118 +450,6 @@ def main():
         [👨‍💻 GitHub]( https://github.com/liusai0820/md2govdoc)
         """)
     
-    # 标签页1: 上传文件
-    with tab1:
-        st.markdown("")
-        uploaded_file = st.file_uploader(
-            "选择Markdown文件",
-            type=['md', 'markdown', 'txt'],
-            help="支持 .md、.markdown、.txt 格式，文件大小不超过 200MB"
-        )
-        
-        if uploaded_file is not None:
-            st.success(f"✅ 已选择文件：**{uploaded_file.name}** ({uploaded_file.size / 1024:.1f} KB)")
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            if st.button("🚀 转换并下载", key="convert_file", use_container_width=True):
-                with st.spinner("正在转换中..."):
-                    # 创建临时文件
-                    with tempfile.NamedTemporaryFile(mode='wb', suffix='.md', delete=False) as tmp_input:
-                        tmp_input.write(uploaded_file.getvalue())
-                        input_path = tmp_input.name
-                    
-                    output_path = input_path.replace('.md', '.docx')
-                    
-                    # 转换文档
-                    success = convert_markdown_to_gov_docx(input_path, output_path)
-                    
-                    if success:
-                        # 读取生成的文件
-                        with open(output_path, 'rb') as f:
-                            docx_data = f.read()
-                        
-                        st.success("✅ 转换成功！")
-                        
-                        # 提供下载
-                        st.download_button(
-                            label="📥 下载Word文档",
-                            data=docx_data,
-                            file_name="公文格式文档.docx",
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                            use_container_width=True
-                        )
-                        
-                        # 清理临时文件
-                        try:
-                            os.remove(input_path)
-                            os.remove(output_path)
-                        except:
-                            pass
-                    else:
-                        st.error("❌ 转换失败，请检查Markdown格式是否正确")
-    
-    # 标签页2: 粘贴文本
-    with tab2:
-        st.markdown("")
-        st.info("💡 提示：可直接在下方文本框中粘贴或输入Markdown内容")
-        
-        markdown_text = st.text_area(
-            "Markdown内容",
-            height=450,
-            placeholder="# 关于加强公文格式管理的通知\n\n## 一、总体要求\n\n各单位要高度重视公文格式规范化工作，严格按照标准执行。\n\n## 二、具体措施\n\n### 1. 字体要求\n\n正文采用**仿宋_GB2312字体**，字号为三号（16磅）。\n\n### 2. 页面设置\n\n页边距设置如下：\n- 上边距：37毫米\n- 下边距：35毫米",
-            help="支持标准Markdown语法，包括标题、列表、加粗、斜体等",
-            label_visibility="collapsed"
-        )
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        col1, col2 = st.columns([1, 3])
-        
-        with col1:
-            if st.button("🗑️ 清空", key="clear_text", use_container_width=True):
-                st.rerun()
-        
-        with col2:
-            if st.button("🚀 转换并下载", key="convert_text", use_container_width=True, type="primary"):
-                if not markdown_text.strip():
-                    st.error("❌ 请输入Markdown文本")
-                else:
-                    with st.spinner("正在转换中..."):
-                        # 创建临时文件
-                        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as tmp_input:
-                            tmp_input.write(markdown_text)
-                            input_path = tmp_input.name
-                        
-                        output_path = input_path.replace('.md', '.docx')
-                        
-                        # 转换文档
-                        success = convert_markdown_to_gov_docx(input_path, output_path)
-                        
-                        if success:
-                            # 读取生成的文件
-                            with open(output_path, 'rb') as f:
-                                docx_data = f.read()
-                            
-                            st.success("✅ 转换成功！")
-                            
-                            # 提供下载
-                            st.download_button(
-                                label="📥 下载Word文档",
-                                data=docx_data,
-                                file_name="公文格式文档.docx",
-                                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                use_container_width=True
-                            )
-                            
-                            # 清理临时文件
-                            try:
-                                os.remove(input_path)
-                                os.remove(output_path)
-                            except:
-                                pass
-                        else:
-                            st.error("❌ 转换失败，请检查Markdown格式是否正确")
     
     # 底部说明
     st.markdown("<br><br>", unsafe_allow_html=True)
