@@ -13,12 +13,12 @@ from md2gov_docx import convert_markdown_to_gov_docx
 
 # 页面配置
 st.set_page_config(
-    page_title="GovDoc - 公文格式转换工具",
-    page_icon="📋",
+    page_title="公文格式转换器 - AI输出一键转公文",
+    page_icon="📝",
     layout="centered",
-    initial_sidebar_state="collapsed",  # 隐藏侧边栏
+    initial_sidebar_state="collapsed",
     menu_items={
-        'About': "GovDoc - 专业的政府公文格式转换工具 v1.0"
+        'About': "公文格式转换器 - 把AI输出一键转换成标准公文 | 符合GB/T 9704-2012标准"
     }
 )
 
@@ -121,42 +121,44 @@ st.markdown("""
     
     /* 按钮样式 */
     .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #3182ce;
         color: white;
         border: none;
-        border-radius: 8px;
+        border-radius: 6px;
         padding: 0.75rem 2rem;
         font-weight: 600;
         font-size: 1rem;
         width: 100%;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(102, 126, 234, 0.25);
+        transition: all 0.2s ease;
     }
     
     .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.35);
+        background: #2c5aa0;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
     }
     
     .stButton > button:active {
         transform: translateY(0);
+        background: #2a4365;
     }
     
     /* 下载按钮特殊样式 */
     .stDownloadButton > button {
-        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        background: #38a169;
         color: white;
         border: none;
-        border-radius: 8px;
+        border-radius: 6px;
         padding: 0.75rem 2rem;
         font-weight: 600;
         width: 100%;
-        box-shadow: 0 4px 6px rgba(72, 187, 120, 0.25);
+        transition: all 0.2s ease;
     }
     
     .stDownloadButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(72, 187, 120, 0.35);
+        background: #2f855a;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(56, 161, 105, 0.3);
     }
     
     /* 文本框样式 */
@@ -185,8 +187,13 @@ st.markdown("""
     }
     
     .uploadedFile:hover {
-        border-color: #667eea;
+        border-color: #3182ce;
         background: #edf2f7;
+    }
+    
+    /* 隐藏文件上传的英文提示 */
+    [data-testid="stFileUploader"] label {
+        display: none;
     }
     
     /* 信息框样式 */
@@ -252,8 +259,9 @@ def main():
     # 简洁的头部
     st.markdown("""
     <div style="text-align: center; padding: 1rem 0 0.5rem 0;">
-        <h1 style="color: #1a365d; font-size: 2rem; margin-bottom: 0.3rem; font-weight: 700;">GovDoc</h1>
-        <p style="color: #718096; font-size: 0.9rem; margin-bottom: 0;">Markdown 转政府公文格式 | 符合 GB/T 9704-2012 标准</p>
+        <h1 style="color: #1a365d; font-size: 2.2rem; margin-bottom: 0.5rem; font-weight: 700;">公文格式转换器</h1>
+        <p style="color: #4a5568; font-size: 1rem; margin-bottom: 0.3rem; font-weight: 500;">把AI输出一键转换成标准公文，省去排版烦恼</p>
+        <p style="color: #a0aec0; font-size: 0.85rem; margin-bottom: 0;">符合 GB/T 9704-2012 标准</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -324,11 +332,17 @@ def main():
     
     # 标签页2: 上传文件
     with tab2:
-        st.markdown("")
+        st.markdown("""
+        <div style="text-align: center; margin: 1rem 0; padding: 1rem; background: #ebf8ff; border-radius: 8px;">
+            <p style="margin: 0; color: #2c5282; font-size: 0.95rem;">📁 拖拽文件到下方区域，或点击选择文件</p>
+            <p style="margin: 0.3rem 0 0 0; color: #718096; font-size: 0.85rem;">支持 .md、.markdown、.txt 格式</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
         uploaded_file = st.file_uploader(
-            "选择Markdown文件",
+            "选择文件",
             type=['md', 'markdown', 'txt'],
-            help="支持 .md、.markdown、.txt 格式，文件大小不超过 200MB"
+            label_visibility="collapsed"
         )
         
         if uploaded_file is not None:
@@ -379,7 +393,7 @@ def main():
     <div style="text-align: center; padding: 2rem 0 1rem 0; color: #a0aec0; font-size: 0.85rem;">
         <p style="margin: 0.5rem 0;">支持标题、表格、列表、加粗、斜体 | 符合 GB/T 9704-2012 标准</p>
         <p style="margin: 0.5rem 0;">
-            <a href="https://github.com/liusai0820/md2govdoc" target="_blank" style="color: #667eea; text-decoration: none;">GitHub</a>
+            <a href="https://github.com/liusai0820/md2govdoc" target="_blank" style="color: #3182ce; text-decoration: none;">源码</a>
         </p>
     </div>
     """, unsafe_allow_html=True)
