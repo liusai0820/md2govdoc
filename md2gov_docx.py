@@ -58,6 +58,9 @@ MD_CODE_PATTERN = re.compile(r'`(.+?)`')            # `代码`
 # 分隔线
 MD_SEPARATOR_PATTERN = re.compile(r'^[-*_]{3,}$')
 
+# 表格识别
+MD_TABLE_SEPARATOR = re.compile(r'^\s*\|?\s*[-:]+\s*\|')
+
 
 # ==================== 工具函数 ====================
 def set_run_format(run, font_name, font_size, bold=False, italic=False, color=None):
@@ -169,6 +172,25 @@ def remove_number_space(text):
     return NUMBER_SPACE_PATTERN.sub(r'\1', text)
 
 
+def clean_markdown_marks(text):
+    """
+    清理文本中的Markdown格式标记（用于标题等不需要格式的地方）
+    移除：**加粗**、*斜体*、`代码` 等标记
+    
+    例如："**一级标题**" -> "一级标题"
+          "*重要*内容" -> "重要内容"
+    """
+    # 移除加粗标记 **text**
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    # 移除斜体标记 *text*
+    text = re.sub(r'\*(.+?)\*', r'\1', text)
+    # 移除代码标记 `text`
+    text = re.sub(r'`(.+?)`', r'\1', text)
+    # 移除删除线 ~~text~~
+    text = re.sub(r'~~(.+?)~~', r'\1', text)
+    return text
+
+
 def add_formatted_text(paragraph, text, base_font, base_size):
     """
     向段落添加带格式的文本（处理加粗、斜体等）
@@ -196,6 +218,68 @@ def setup_page_margins(doc):
         section.bottom_margin = MARGIN_BOTTOM
         section.left_margin = MARGIN_LEFT
         section.right_margin = MARGIN_RIGHT
+
+
+def parse_table_row(line):
+    """
+    解析Markdown表格行
+    返回单元格列表
+    """
+    # 移除首尾的 |
+    line = line.strip()
+    if line.startswith('|'):
+        line = line[1:]
+    if line.endswith('|'):
+        line = line[:-1]
+    
+    # 分割单元格
+    cells = [cell.strip() for cell in line.split('|')]
+    return cells
+
+
+def add_table_to_doc(doc, table_data):
+    """
+    向Word文档添加表格
+    
+    参数:
+        doc: Word文档对象
+        table_data: 表格数据 [[header1, header2, ...], [row1col1, row1col2, ...], ...]
+    """
+    if not table_data or len(table_data) < 2:
+        return
+    
+    # 创建表格
+    rows = len(table_data)
+    cols = len(table_data[0])
+    table = doc.add_table(rows=rows, cols=cols)
+    
+    # 设置表格样式
+    table.style = 'Table Grid'
+    
+    # 填充表格内容
+    for i, row_data in enumerate(table_data):
+        row = table.rows[i]
+        for j, cell_text in enumerate(row_data):
+            if j < len(row.cells):
+                cell = row.cells[j]
+                # 设置单元格文本
+                cell.text = cell_text
+                
+                # 设置单元格格式
+                for paragraph in cell.paragraphs:
+                    paragraph.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    paragraph.paragraph_format.space_before = Pt(3)
+                    paragraph.paragraph_format.space_after = Pt(3)
+                    
+                    for run in paragraph.runs:
+                        # 表头加粗
+                        if i == 0:
+                            set_run_format(run, FONT_HEITI, SIZE_SANHAO, bold=True)
+                        else:
+                            set_run_format(run, FONT_FANGSONG_GB2312, SIZE_SANHAO)
+    
+    # 表格后添加空行
+    doc.add_paragraph()
 
 
 # ==================== 核心转换函数 ====================
@@ -230,13 +314,47 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
         # 标记第一个标题（作为主标题）
         is_first_heading = True
         
+        # 表格处理状态
+        in_table = False
+        table_data = []
+        
         # 逐行处理
-        for line_num, line in enumerate(lines, 1):
+        i = 0
+        while i < len(lines):
+            line = lines[i]
             text = line.strip()
             
             # 跳过空行和分隔线
             if not text or MD_SEPARATOR_PATTERN.match(text):
+                i += 1
                 continue
+            
+            # ============ 检测表格 ============
+            if '|' in text and i + 1 < len(lines):
+                next_line = lines[i + 1].strip()
+                # 检查下一行是否是表格分隔符
+                if MD_TABLE_SEPARATOR.match(next_line):
+                    # 开始解析表格
+                    in_table = True
+                    table_data = []
+                    
+                    # 表头
+                    table_data.append(parse_table_row(text))
+                    i += 1  # 跳过分隔符行
+                    i += 1
+                    
+                    # 读取表格数据行
+                    while i < len(lines):
+                        row_text = lines[i].strip()
+                        if not row_text or '|' not in row_text:
+                            break
+                        table_data.append(parse_table_row(row_text))
+                        i += 1
+                    
+                    # 添加表格到文档
+                    add_table_to_doc(doc, table_data)
+                    in_table = False
+                    continue
             
             # 创建新段落
             para = doc.add_paragraph()
@@ -245,7 +363,7 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
             match = MD_H1_PATTERN.match(text)
             if match and is_first_heading:
                 is_first_heading = False
-                title_text = match.group(1)
+                title_text = clean_markdown_marks(match.group(1))  # 清理格式标记
                 apply_paragraph_format(
                     para.paragraph_format,
                     alignment=WD_ALIGN_PARAGRAPH.CENTER,
@@ -257,33 +375,37 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
                 
                 # 主标题后添加空行
                 doc.add_paragraph()
+                i += 1
                 continue
             
             # ============ 2. 一级标题（## 开头）============
             match = MD_H2_PATTERN.match(text)
             if match:
-                heading_text = match.group(1)
+                heading_text = clean_markdown_marks(match.group(1))  # 清理格式标记
                 apply_paragraph_format(para.paragraph_format)
-                add_formatted_text(para, heading_text, FONT_HEITI, SIZE_SANHAO)
+                run = para.add_run(heading_text)
+                set_run_format(run, FONT_HEITI, SIZE_SANHAO)
+                i += 1
                 continue
             
             # ============ 3. 二级标题（### 开头）============
             match = MD_H3_PATTERN.match(text)
             if match:
-                heading_text = match.group(1)
+                heading_text = clean_markdown_marks(match.group(1))  # 清理格式标记
                 apply_paragraph_format(para.paragraph_format)
-                add_formatted_text(para, heading_text, FONT_KAITI_GB2312, SIZE_SANHAO)
-                # 二级标题可以选择加粗
-                for run in para.runs:
-                    run.font.bold = True
+                run = para.add_run(heading_text)
+                set_run_format(run, FONT_KAITI_GB2312, SIZE_SANHAO, bold=True)
+                i += 1
                 continue
             
             # ============ 4. 三级标题（#### 开头）============
             match = MD_H4_PATTERN.match(text)
             if match:
-                heading_text = match.group(1)
+                heading_text = clean_markdown_marks(match.group(1))  # 清理格式标记
                 apply_paragraph_format(para.paragraph_format)
-                add_formatted_text(para, heading_text, FONT_KAITI_GB2312, SIZE_SANHAO)
+                run = para.add_run(heading_text)
+                set_run_format(run, FONT_KAITI_GB2312, SIZE_SANHAO)
+                i += 1
                 continue
             
             # ============ 5. 列表项 ============
@@ -292,11 +414,14 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
                 list_text = match.group(1)
                 apply_paragraph_format(para.paragraph_format)
                 add_formatted_text(para, list_text, FONT_FANGSONG_GB2312, SIZE_SANHAO)
+                i += 1
                 continue
             
             # ============ 6. 普通正文 ============
             apply_paragraph_format(para.paragraph_format)
             add_formatted_text(para, text, FONT_FANGSONG_GB2312, SIZE_SANHAO)
+            
+            i += 1
         
         # 保存文档
         output_path = Path(docx_path)
