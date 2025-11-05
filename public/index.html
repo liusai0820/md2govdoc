@@ -490,6 +490,25 @@
 
         let selectedFile = null;
 
+        // 从Content-Disposition头中提取文件名
+        function extractFilename(contentDisposition) {
+            if (!contentDisposition) return '公文格式文档.docx';
+            
+            // 优先匹配 filename*=UTF-8''xxx 格式（RFC 5987）
+            const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/);
+            if (utf8Match && utf8Match[1]) {
+                return decodeURIComponent(utf8Match[1]);
+            }
+            
+            // 其次匹配 filename="xxx" 或 filename=xxx 格式
+            const normalMatch = contentDisposition.match(/filename=["']?([^;"']+)["']?/);
+            if (normalMatch && normalMatch[1]) {
+                return normalMatch[1];
+            }
+            
+            return '公文格式文档.docx';
+        }
+
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
