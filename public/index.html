@@ -46,9 +46,25 @@
             background: var(--bg-primary);
             border-radius: 20px;
             box-shadow: var(--shadow-lg);
-            max-width: 800px;
+            max-width: 1400px;
             width: 100%;
             overflow: hidden;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 32px;
+            padding: 0 40px 40px;
+        }
+
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .sidebar {
+            width: 360px;
+            flex-shrink: 0;
         }
 
         .header {
@@ -105,7 +121,7 @@
         }
 
         .content {
-            padding: 0 40px 40px;
+            /* padding moved to main-layout */
         }
 
         .tabs {
@@ -402,11 +418,12 @@
         }
 
         .info-card {
-            margin-top: 32px;
             padding: 24px;
             background: var(--bg-secondary);
             border-radius: 16px;
             border: 1px solid var(--border-color);
+            position: sticky;
+            top: 40px;
         }
 
         .info-card h3 {
@@ -427,7 +444,7 @@
         .info-card li {
             padding: 10px 0;
             color: var(--text-secondary);
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.6;
             display: flex;
             align-items: flex-start;
@@ -440,6 +457,7 @@
             font-weight: bold;
             font-size: 18px;
             line-height: 1.2;
+            flex-shrink: 0;
         }
 
         .info-card code {
@@ -447,9 +465,10 @@
             padding: 3px 8px;
             border-radius: 6px;
             font-family: 'SF Mono', 'Monaco', monospace;
-            font-size: 13px;
+            font-size: 12px;
             color: var(--primary-color);
             border: 1px solid var(--border-color);
+            white-space: nowrap;
         }
 
         .footer {
@@ -476,6 +495,20 @@
             opacity: 0.7;
         }
 
+        @media (max-width: 1200px) {
+            .main-layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .info-card {
+                position: static;
+            }
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 20px 16px;
@@ -497,8 +530,9 @@
                 font-size: 15px;
             }
 
-            .content {
+            .main-layout {
                 padding: 0 24px 24px;
+                gap: 24px;
             }
 
             .button-group {
@@ -555,46 +589,47 @@
             </div>
         </div>
 
-        <div class="content">
-            <div class="tabs">
-                <button class="tab active" onclick="switchTab('upload')">
-                    <span>📁</span>
-                    <span>上传文件</span>
-                </button>
-                <button class="tab" onclick="switchTab('text')">
-                    <span>📝</span>
-                    <span>粘贴文本</span>
-                </button>
-            </div>
-
-            <!-- 上传文件标签页 -->
-            <div id="upload-tab" class="tab-content active">
-                <div class="upload-area" id="uploadArea">
-                    <div class="upload-icon">📁</div>
-                    <div class="upload-text">点击选择或拖拽文件到此处</div>
-                    <div class="upload-hint">支持 .md、.markdown、.txt、.docx 格式</div>
-                    <input type="file" id="fileInput" class="file-input" accept=".md,.markdown,.txt,.docx">
-                </div>
-
-                <div id="selectedFile" class="selected-file" style="display: none;">
-                    <div class="file-info">
-                        <span class="file-icon">📄</span>
-                        <span class="file-name" id="fileName"></span>
-                    </div>
-                    <button class="remove-file" onclick="removeFile()">✕</button>
-                </div>
-
-                <div class="button-group">
-                    <button class="btn btn-primary" id="convertFileBtn" onclick="convertFile()" disabled>
-                        <span>🚀</span>
-                        <span>转换并下载</span>
+        <div class="main-layout">
+            <div class="main-content">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('upload')">
+                        <span>📁</span>
+                        <span>上传文件</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('text')">
+                        <span>📝</span>
+                        <span>粘贴文本</span>
                     </button>
                 </div>
-            </div>
 
-            <!-- 粘贴文本标签页 -->
-            <div id="text-tab" class="tab-content">
-                <textarea id="markdownText" placeholder="在此粘贴或输入Markdown文本...
+                <!-- 上传文件标签页 -->
+                <div id="upload-tab" class="tab-content active">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">点击选择或拖拽文件到此处</div>
+                        <div class="upload-hint">支持 .md、.markdown、.txt、.docx 格式</div>
+                        <input type="file" id="fileInput" class="file-input" accept=".md,.markdown,.txt,.docx">
+                    </div>
+
+                    <div id="selectedFile" class="selected-file" style="display: none;">
+                        <div class="file-info">
+                            <span class="file-icon">📄</span>
+                            <span class="file-name" id="fileName"></span>
+                        </div>
+                        <button class="remove-file" onclick="removeFile()">✕</button>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="convertFileBtn" onclick="convertFile()" disabled>
+                            <span>🚀</span>
+                            <span>转换并下载</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 粘贴文本标签页 -->
+                <div id="text-tab" class="tab-content">
+                    <textarea id="markdownText" placeholder="在此粘贴或输入Markdown文本...
 
 示例：
 # 关于加强公文格式管理的通知
@@ -611,30 +646,33 @@
 
 注：标题会自动添加序号（一、二、三、或（一）（二）（三））"></textarea>
 
-                <div class="button-group">
-                    <button class="btn btn-secondary" onclick="clearText()">
-                        <span>🗑️</span>
-                        <span>清空</span>
-                    </button>
-                    <button class="btn btn-primary" onclick="convertText()">
-                        <span>🚀</span>
-                        <span>转换并下载</span>
-                    </button>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="clearText()">
+                            <span>🗑️</span>
+                            <span>清空</span>
+                        </button>
+                        <button class="btn btn-primary" onclick="convertText()">
+                            <span>🚀</span>
+                            <span>转换并下载</span>
+                        </button>
+                    </div>
                 </div>
+
+                <div id="statusMessage" class="status-message"></div>
             </div>
 
-            <div id="statusMessage" class="status-message"></div>
-
-            <div class="info-card">
-                <h3>📝 支持的Markdown语法</h3>
-                <ul>
-                    <li><code>#</code> 主标题 → 方正小标宋简体 22磅 加粗 居中</li>
-                    <li><code>##</code> 一级标题 → 黑体 16磅（自动添加：一、二、三、）</li>
-                    <li><code>###</code> 二级标题 → 楷体 16磅 加粗（自动添加：（一）（二）（三））</li>
-                    <li><code>####</code> 三级标题 → 楷体 16磅（自动添加：1. 2. 3.）</li>
-                    <li><code>**文本**</code> 加粗 | <code>*文本*</code> 斜体 | <code>- 列表</code> 列表项</li>
-                </ul>
-            </div>
+            <aside class="sidebar">
+                <div class="info-card">
+                    <h3>📝 支持的Markdown语法</h3>
+                    <ul>
+                        <li><code>#</code> 主标题 → 方正小标宋简体 22磅 加粗 居中</li>
+                        <li><code>##</code> 一级标题 → 黑体 16磅（自动添加：一、二、三、）</li>
+                        <li><code>###</code> 二级标题 → 楷体 16磅 加粗（自动添加：（一）（二）（三））</li>
+                        <li><code>####</code> 三级标题 → 楷体 16磅（自动添加：1. 2. 3.）</li>
+                        <li><code>**文本**</code> 加粗 | <code>*文本*</code> 斜体 | <code>- 列表</code> 列表项</li>
+                    </ul>
+                </div>
+            </aside>
         </div>
 
         <div class="footer">
