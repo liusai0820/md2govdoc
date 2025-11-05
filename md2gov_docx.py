@@ -48,8 +48,8 @@ MD_H5_PATTERN = re.compile(r'^#####\s+(.+)$')       # ##### 四级标题（(1)�
 # 序号格式处理正则（用于移除序号后的空格）
 NUMBER_SPACE_PATTERN = re.compile(r'^([一二三四五六七八九十]+、|\d+\.|（[一二三四五六七八九十]+）)\s+')
 
-# 检测是否已有序号的正则
-HAS_NUMBER_PATTERN = re.compile(r'^([一二三四五六七八九十]+、|\d+\.|（[一二三四五六七八九十]+）|[0-9]+\.)')
+# 检测是否已有标准公文序号的正则（不包括1.1这种格式）
+HAS_NUMBER_PATTERN = re.compile(r'^([一二三四五六七八九十]+、|（[一二三四五六七八九十]+）|\(\d+\)\s)')
 
 # 中文数字转换
 CHINESE_NUMBERS = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十',
@@ -208,6 +208,31 @@ def has_number_prefix(text):
     return HAS_NUMBER_PATTERN.match(text) is not None
 
 
+def remove_old_number_prefix(text):
+    """
+    移除旧的序号前缀（如1.1、2.1、1.、2.等）
+    
+    参数:
+        text: 标题文本
+    
+    返回:
+        移除序号后的纯文本
+    """
+    # 匹配 1.1、2.1、3.1 等格式（主序号.子序号）
+    pattern = r'^(\d+)\.(\d+)\s*(.*)$'
+    match = re.match(pattern, text)
+    if match:
+        return match.group(3)  # 只返回内容部分
+    
+    # 匹配纯数字序号 1、2、3 或 1. 2. 3.
+    pattern2 = r'^(\d+)[.、]\s*(.*)$'
+    match2 = re.match(pattern2, text)
+    if match2:
+        return match2.group(2)  # 只返回内容部分
+    
+    return text
+
+
 def add_number_prefix(text, level, counter):
     """
     为标题添加序号前缀
@@ -220,9 +245,12 @@ def add_number_prefix(text, level, counter):
     返回:
         带序号的标题文本
     """
-    # 如果已有序号，直接返回
+    # 如果已有标准公文序号（一、或（一）），直接返回
     if has_number_prefix(text):
         return text
+    
+    # 移除旧的数字序号（如1.1、2.1等）
+    text = remove_old_number_prefix(text)
     
     # 根据级别添加不同格式的序号
     if level == 2:  # 一级标题：一、二、三、（黑体）
@@ -289,6 +317,27 @@ def parse_table_row(line):
     return cells
 
 
+def clean_table_cell_text(text):
+    """
+    清理表格单元格文本，移除Markdown格式符号
+    
+    参数:
+        text: 原始文本
+    
+    返回:
+        清理后的文本
+    """
+    # 移除加粗标记 **text**
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    # 移除斜体标记 *text*
+    text = re.sub(r'\*(.+?)\*', r'\1', text)
+    # 移除代码标记 `text`
+    text = re.sub(r'`(.+?)`', r'\1', text)
+    # 移除删除线 ~~text~~
+    text = re.sub(r'~~(.+?)~~', r'\1', text)
+    return text
+
+
 def add_table_to_doc(doc, table_data):
     """
     向Word文档添加表格
@@ -314,8 +363,10 @@ def add_table_to_doc(doc, table_data):
         for j, cell_text in enumerate(row_data):
             if j < len(row.cells):
                 cell = row.cells[j]
+                # 清理单元格文本中的Markdown格式符号
+                cleaned_text = clean_table_cell_text(cell_text)
                 # 设置单元格文本
-                cell.text = cell_text
+                cell.text = cleaned_text
                 
                 # 设置单元格格式
                 for paragraph in cell.paragraphs:
@@ -381,6 +432,10 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
         while i < len(lines):
             line = lines[i]
             text = line.strip()
+            
+            if '1.1' in text or '2.1' in text:
+                with open('/tmp/debug.log', 'a') as f:
+                    f.write(f"行{i}: {repr(text)}\n")
             
             # 跳过空行和分隔线
             if not text or MD_SEPARATOR_PATTERN.match(text):
@@ -454,11 +509,17 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
             # ============ 3. 二级标题（### 开头）============
             match = MD_H3_PATTERN.match(text)
             if match:
+                with open('/tmp/debug.log', 'a') as f:
+                    f.write(f"DEBUG H3匹配: {match.group(1)}\n")
                 heading_text = clean_markdown_marks(match.group(1))  # 清理格式标记
+                with open('/tmp/debug.log', 'a') as f:
+                    f.write(f"DEBUG clean后: {heading_text}\n")
                 h3_counter += 1
                 h4_counter = 0  # 重置下级计数器
                 h5_counter = 0
                 heading_text = add_number_prefix(heading_text, 3, h3_counter)
+                with open('/tmp/debug.log', 'a') as f:
+                    f.write(f"DEBUG 最终: {heading_text}\n")
                 apply_paragraph_format(para.paragraph_format)
                 run = para.add_run(heading_text)
                 set_run_format(run, FONT_KAITI_GB2312, SIZE_SANHAO, bold=True)
@@ -554,6 +615,6 @@ def main():
     success = convert_markdown_to_gov_docx(input_file, output_file)
     sys.exit(0 if success else 1)
 
-
+ 
 if __name__ == '__main__':
     main()
