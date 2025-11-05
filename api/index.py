@@ -26,17 +26,23 @@ TEMP_DIR = tempfile.gettempdir()
 
 
 def extract_title_from_markdown(content):
-    """从Markdown内容中提取标题作为文件名"""
+    """
+    从Markdown内容中提取标题作为文件名
+    优先级：# 标题 > ## 标题 > 第一行非空文本
+    """
     lines = content.strip().split('\n')
     
+    # 查找第一个一级标题
     for line in lines:
         line = line.strip()
         if line.startswith('# '):
             title = line[2:].strip()
+            # 移除markdown格式符号
             title = re.sub(r'[#*`\[\]()]', '', title).strip()
             if title:
                 return sanitize_filename(title)
     
+    # 查找第一个二级标题
     for line in lines:
         line = line.strip()
         if line.startswith('## '):
@@ -45,11 +51,13 @@ def extract_title_from_markdown(content):
             if title:
                 return sanitize_filename(title)
     
+    # 使用第一行非空文本
     for line in lines:
         line = line.strip()
         if line and not line.startswith('#'):
             title = re.sub(r'[#*`\[\]()]', '', line).strip()
             if title:
+                # 限制长度
                 title = title[:50]
                 return sanitize_filename(title)
     

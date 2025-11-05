@@ -40,9 +40,10 @@ MARGIN_RIGHT = Mm(26)
 # ==================== Markdown模式识别 ====================
 # 标题识别（支持多种Markdown标记）
 MD_H1_PATTERN = re.compile(r'^#\s+(.+)$')           # # 主标题
-MD_H2_PATTERN = re.compile(r'^##\s+(.+)$')          # ## 一级标题
-MD_H3_PATTERN = re.compile(r'^###\s+(.+)$')         # ### 二级标题
-MD_H4_PATTERN = re.compile(r'^####\s+(.+)$')        # #### 三级标题
+MD_H2_PATTERN = re.compile(r'^##\s+(.+)$')          # ## 一级标题（一、）
+MD_H3_PATTERN = re.compile(r'^###\s+(.+)$')         # ### 二级标题（（一））
+MD_H4_PATTERN = re.compile(r'^####\s+(.+)$')        # #### 三级标题（1.）
+MD_H5_PATTERN = re.compile(r'^#####\s+(.+)$')       # ##### 四级标题（(1)）
 
 # 序号格式处理正则（用于移除序号后的空格）
 NUMBER_SPACE_PATTERN = re.compile(r'^([一二三四五六七八九十]+、|\d+\.|（[一二三四五六七八九十]+）)\s+')
@@ -213,7 +214,7 @@ def add_number_prefix(text, level, counter):
     
     参数:
         text: 标题文本
-        level: 标题级别 (2=一级标题, 3=二级标题, 4=三级标题)
+        level: 标题级别 (2=一级, 3=二级, 4=三级, 5=四级)
         counter: 当前级别的计数器
     
     返回:
@@ -224,18 +225,20 @@ def add_number_prefix(text, level, counter):
         return text
     
     # 根据级别添加不同格式的序号
-    if level == 2:  # 一级标题：一、二、三、
+    if level == 2:  # 一级标题：一、二、三、（黑体）
         if counter <= len(CHINESE_NUMBERS) - 1:
             return f"{CHINESE_NUMBERS[counter]}、{text}"
         else:
             return f"{counter}、{text}"
-    elif level == 3:  # 二级标题：（一）（二）（三）
+    elif level == 3:  # 二级标题：（一）（二）（三）（楷体）
         if counter <= len(CHINESE_NUMBERS) - 1:
             return f"（{CHINESE_NUMBERS[counter]}）{text}"
         else:
             return f"（{counter}）{text}"
-    elif level == 4:  # 三级标题：1. 2. 3.
+    elif level == 4:  # 三级标题：1. 2. 3.（仿宋）
         return f"{counter}. {text}"
+    elif level == 5:  # 四级标题：(1) (2) (3)（仿宋）
+        return f"({counter}) {text}"
     
     return text
 
@@ -368,9 +371,10 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
         table_data = []
         
         # 标题计数器（用于自动编号）
-        h2_counter = 0  # 一级标题计数器
-        h3_counter = 0  # 二级标题计数器
-        h4_counter = 0  # 三级标题计数器
+        h2_counter = 0  # 一级标题计数器（一、）
+        h3_counter = 0  # 二级标题计数器（（一））
+        h4_counter = 0  # 三级标题计数器（1.）
+        h5_counter = 0  # 四级标题计数器（(1)）
         
         # 逐行处理
         i = 0
@@ -439,6 +443,7 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
                 h2_counter += 1
                 h3_counter = 0  # 重置下级计数器
                 h4_counter = 0
+                h5_counter = 0
                 heading_text = add_number_prefix(heading_text, 2, h2_counter)
                 apply_paragraph_format(para.paragraph_format)
                 run = para.add_run(heading_text)
@@ -452,6 +457,7 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
                 heading_text = clean_markdown_marks(match.group(1))  # 清理格式标记
                 h3_counter += 1
                 h4_counter = 0  # 重置下级计数器
+                h5_counter = 0
                 heading_text = add_number_prefix(heading_text, 3, h3_counter)
                 apply_paragraph_format(para.paragraph_format)
                 run = para.add_run(heading_text)
@@ -464,10 +470,23 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
             if match:
                 heading_text = clean_markdown_marks(match.group(1))  # 清理格式标记
                 h4_counter += 1
+                h5_counter = 0  # 重置下级计数器
                 heading_text = add_number_prefix(heading_text, 4, h4_counter)
                 apply_paragraph_format(para.paragraph_format)
                 run = para.add_run(heading_text)
-                set_run_format(run, FONT_KAITI_GB2312, SIZE_SANHAO)
+                set_run_format(run, FONT_FANGSONG_GB2312, SIZE_SANHAO)  # 改为仿宋
+                i += 1
+                continue
+            
+            # ============ 5. 四级标题（##### 开头）============
+            match = MD_H5_PATTERN.match(text)
+            if match:
+                heading_text = clean_markdown_marks(match.group(1))  # 清理格式标记
+                h5_counter += 1
+                heading_text = add_number_prefix(heading_text, 5, h5_counter)
+                apply_paragraph_format(para.paragraph_format)
+                run = para.add_run(heading_text)
+                set_run_format(run, FONT_FANGSONG_GB2312, SIZE_SANHAO)  # 仿宋
                 i += 1
                 continue
             
