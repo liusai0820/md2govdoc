@@ -160,14 +160,21 @@ def convert_markdown():
             return jsonify({'error': '转换失败，请检查Markdown格式'}), 500
         
         # 从markdown内容中提取标题作为文件名
-        if markdown_content:
+        doc_title = None
+        
+        # 优先从markdown内容提取标题
+        if markdown_content and markdown_content.strip():
             doc_title = extract_title_from_markdown(markdown_content)
-        else:
+        
+        # 如果没有提取到标题，使用原文件名
+        if not doc_title or doc_title == "公文格式文档":
             if original_filename:
                 doc_title = os.path.splitext(original_filename)[0]
                 doc_title = sanitize_filename(doc_title)
-            else:
-                doc_title = "公文格式文档"
+        
+        # 最后的默认值
+        if not doc_title:
+            doc_title = "公文格式文档"
         
         download_filename = f"{doc_title}.docx"
         
