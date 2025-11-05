@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown转政府公文格式工具</title>
+    <title>公文格式转换器 - AI输出一键转公文</title>
+    <meta name="description" content="把AI输出一键转换成标准公文格式，支持Markdown转Word，符合GB/T 9704-2012标准">
     <style>
         * {
             margin: 0;
@@ -26,7 +27,7 @@
             background: white;
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 800px;
+            max-width: 900px;
             width: 100%;
             padding: 40px;
         }
@@ -45,6 +46,16 @@
         .header p {
             color: #666;
             font-size: 14px;
+        }
+
+        .feature-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin: 10px 5px 0 5px;
         }
 
         .tabs {
@@ -167,7 +178,7 @@
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
         }
@@ -282,6 +293,20 @@
             color: #667eea;
         }
 
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 24px;
@@ -304,22 +329,27 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📄 Markdown转政府公文格式</h1>
-            <p>支持文件上传或直接粘贴文本，一键生成标准公文格式Word文档</p>
+            <h1>📄 公文格式转换器</h1>
+            <p>把AI输出一键转换成标准公文，省去排版烦恼</p>
+            <div>
+                <span class="feature-badge">✨ 自动添加序号</span>
+                <span class="feature-badge">📋 符合GB/T 9704-2012</span>
+                <span class="feature-badge">🚀 秒开无等待</span>
+            </div>
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('upload')">上传文件</button>
-            <button class="tab" onclick="switchTab('text')">粘贴文本</button>
+            <button class="tab active" onclick="switchTab('upload')">📁 上传文件</button>
+            <button class="tab" onclick="switchTab('text')">📝 粘贴文本</button>
         </div>
 
         <!-- 上传文件标签页 -->
         <div id="upload-tab" class="tab-content active">
             <div class="upload-area" id="uploadArea">
                 <div class="upload-icon">📁</div>
-                <div class="upload-text">点击选择或拖拽Markdown文件到此处</div>
-                <div class="upload-hint">支持 .md、.markdown、.txt 格式</div>
-                <input type="file" id="fileInput" class="file-input" accept=".md,.markdown,.txt">
+                <div class="upload-text">点击选择或拖拽文件到此处</div>
+                <div class="upload-hint">支持 .md、.markdown、.txt、.docx 格式</div>
+                <input type="file" id="fileInput" class="file-input" accept=".md,.markdown,.txt,.docx">
             </div>
 
             <div id="selectedFile" class="selected-file" style="display: none;">
@@ -340,11 +370,26 @@
         <!-- 粘贴文本标签页 -->
         <div id="text-tab" class="tab-content">
             <div class="textarea-container">
-                <textarea id="markdownText" placeholder="在此粘贴或输入Markdown文本...&#10;&#10;示例：&#10;# 文档标题&#10;&#10;## 一、主要内容&#10;&#10;这是正文内容..."></textarea>
+                <textarea id="markdownText" placeholder="在此粘贴或输入Markdown文本...
+
+示例：
+# 关于加强公文格式管理的通知
+
+## 总体要求
+
+各单位要高度重视公文格式规范化工作，严格按照标准执行。
+
+## 具体措施
+
+### 字体要求
+
+正文采用**仿宋_GB2312字体**，字号为三号（16磅）。
+
+注：标题会自动添加序号（一、二、三、或（一）（二）（三））"></textarea>
             </div>
 
             <div class="button-group">
-                <button class="btn btn-secondary" onclick="clearText()">清空</button>
+                <button class="btn btn-secondary" onclick="clearText()">🗑️ 清空</button>
                 <button class="btn btn-primary" onclick="convertText()">
                     🚀 转换并下载
                 </button>
@@ -357,17 +402,27 @@
             <h3>📝 支持的Markdown语法</h3>
             <ul>
                 <li><code>#</code> 主标题 → 方正小标宋简体 22磅 加粗 居中</li>
-                <li><code>##</code> 一级标题 → 黑体 16磅</li>
-                <li><code>###</code> 二级标题 → 楷体_GB2312 16磅 加粗</li>
-                <li><code>####</code> 三级标题 → 楷体_GB2312 16磅</li>
+                <li><code>##</code> 一级标题 → 黑体 16磅（自动添加：一、二、三、）</li>
+                <li><code>###</code> 二级标题 → 楷体_GB2312 16磅 加粗（自动添加：（一）（二）（三））</li>
+                <li><code>####</code> 三级标题 → 楷体_GB2312 16磅（自动添加：1. 2. 3.）</li>
                 <li><code>-</code> 列表项 → 仿宋_GB2312 16磅</li>
                 <li><code>**文本**</code> 加粗文本</li>
                 <li><code>*文本*</code> 斜体文本</li>
             </ul>
         </div>
+
+        <div class="footer">
+            <p>完全免费 | 前端托管在Vercel | 后端API在Render</p>
+            <p><a href="https://github.com/liusai0820/md2govdoc" target="_blank">GitHub源码</a></p>
+        </div>
     </div>
 
     <script>
+        // API配置 - 部署后需要修改为实际的API地址
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5000'  // 本地开发
+            : 'https://your-api.onrender.com';  // 生产环境 - 需要替换
+
         let selectedFile = null;
 
         // 标签页切换
@@ -453,17 +508,27 @@
             showStatus('正在转换中，请稍候...', 'loading');
 
             try {
-                const response = await fetch('/api/convert', {
+                const response = await fetch(`${API_BASE_URL}/api/convert`, {
                     method: 'POST',
                     body: formData
                 });
 
                 if (response.ok) {
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = '公文格式文档.docx';
+                    
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?;?/);
+                        if (filenameMatch && filenameMatch[1]) {
+                            filename = decodeURIComponent(filenameMatch[1]);
+                        }
+                    }
+
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = '公文格式文档.docx';
+                    a.download = filename;
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
@@ -494,17 +559,27 @@
             showStatus('正在转换中，请稍候...', 'loading');
 
             try {
-                const response = await fetch('/api/convert', {
+                const response = await fetch(`${API_BASE_URL}/api/convert`, {
                     method: 'POST',
                     body: formData
                 });
 
                 if (response.ok) {
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = '公文格式文档.docx';
+                    
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?;?/);
+                        if (filenameMatch && filenameMatch[1]) {
+                            filename = decodeURIComponent(filenameMatch[1]);
+                        }
+                    }
+
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = '公文格式文档.docx';
+                    a.download = filename;
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);

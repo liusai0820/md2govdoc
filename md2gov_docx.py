@@ -47,6 +47,13 @@ MD_H4_PATTERN = re.compile(r'^####\s+(.+)$')        # #### 三级标题
 # 序号格式处理正则（用于移除序号后的空格）
 NUMBER_SPACE_PATTERN = re.compile(r'^([一二三四五六七八九十]+、|\d+\.|（[一二三四五六七八九十]+）)\s+')
 
+# 检测是否已有序号的正则
+HAS_NUMBER_PATTERN = re.compile(r'^([一二三四五六七八九十]+、|\d+\.|（[一二三四五六七八九十]+）|[0-9]+\.)')
+
+# 中文数字转换
+CHINESE_NUMBERS = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十',
+                   '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十']
+
 # 列表项识别
 MD_LIST_ITEM_PATTERN = re.compile(r'^\s*[-*+☑]\s+(.+)$')
 
@@ -191,6 +198,48 @@ def clean_markdown_marks(text):
     return text
 
 
+def has_number_prefix(text):
+    """
+    检测文本是否已有序号前缀
+    
+    返回: True/False
+    """
+    return HAS_NUMBER_PATTERN.match(text) is not None
+
+
+def add_number_prefix(text, level, counter):
+    """
+    为标题添加序号前缀
+    
+    参数:
+        text: 标题文本
+        level: 标题级别 (2=一级标题, 3=二级标题, 4=三级标题)
+        counter: 当前级别的计数器
+    
+    返回:
+        带序号的标题文本
+    """
+    # 如果已有序号，直接返回
+    if has_number_prefix(text):
+        return text
+    
+    # 根据级别添加不同格式的序号
+    if level == 2:  # 一级标题：一、二、三、
+        if counter <= len(CHINESE_NUMBERS) - 1:
+            return f"{CHINESE_NUMBERS[counter]}、{text}"
+        else:
+            return f"{counter}、{text}"
+    elif level == 3:  # 二级标题：（一）（二）（三）
+        if counter <= len(CHINESE_NUMBERS) - 1:
+            return f"（{CHINESE_NUMBERS[counter]}）{text}"
+        else:
+            return f"（{counter}）{text}"
+    elif level == 4:  # 三级标题：1. 2. 3.
+        return f"{counter}. {text}"
+    
+    return text
+
+
 def add_formatted_text(paragraph, text, base_font, base_size):
     """
     向段落添加带格式的文本（处理加粗、斜体等）
@@ -318,6 +367,11 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
         in_table = False
         table_data = []
         
+        # 标题计数器（用于自动编号）
+        h2_counter = 0  # 一级标题计数器
+        h3_counter = 0  # 二级标题计数器
+        h4_counter = 0  # 三级标题计数器
+        
         # 逐行处理
         i = 0
         while i < len(lines):
@@ -382,6 +436,10 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
             match = MD_H2_PATTERN.match(text)
             if match:
                 heading_text = clean_markdown_marks(match.group(1))  # 清理格式标记
+                h2_counter += 1
+                h3_counter = 0  # 重置下级计数器
+                h4_counter = 0
+                heading_text = add_number_prefix(heading_text, 2, h2_counter)
                 apply_paragraph_format(para.paragraph_format)
                 run = para.add_run(heading_text)
                 set_run_format(run, FONT_HEITI, SIZE_SANHAO)
@@ -392,6 +450,9 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
             match = MD_H3_PATTERN.match(text)
             if match:
                 heading_text = clean_markdown_marks(match.group(1))  # 清理格式标记
+                h3_counter += 1
+                h4_counter = 0  # 重置下级计数器
+                heading_text = add_number_prefix(heading_text, 3, h3_counter)
                 apply_paragraph_format(para.paragraph_format)
                 run = para.add_run(heading_text)
                 set_run_format(run, FONT_KAITI_GB2312, SIZE_SANHAO, bold=True)
@@ -402,6 +463,8 @@ def convert_markdown_to_gov_docx(md_path, docx_path):
             match = MD_H4_PATTERN.match(text)
             if match:
                 heading_text = clean_markdown_marks(match.group(1))  # 清理格式标记
+                h4_counter += 1
+                heading_text = add_number_prefix(heading_text, 4, h4_counter)
                 apply_paragraph_format(para.paragraph_format)
                 run = para.add_run(heading_text)
                 set_run_format(run, FONT_KAITI_GB2312, SIZE_SANHAO)

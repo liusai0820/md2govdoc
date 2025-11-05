@@ -8,8 +8,10 @@ GovDoc - 政府公文格式转换工具
 import streamlit as st
 import tempfile
 import os
+import re
 from pathlib import Path
 from md2gov_docx import convert_markdown_to_gov_docx
+from docx import Document
 
 # 页面配置
 st.set_page_config(
@@ -255,6 +257,71 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+def extract_title_from_markdown(content):
+    """
+    从Markdown内容中提取标题作为文件名
+    优先级：# 标题 > ## 标题 > 第一行非空文本
+    """
+    lines = content.strip().split('\n')
+    
+    # 查找第一个一级标题
+    for line in lines:
+        line = line.strip()
+        if line.startswith('# '):
+            title = line[2:].strip()
+            # 移除markdown格式符号
+            title = re.sub(r'[#*`\[\]()]', '', title).strip()
+            if title:
+                return sanitize_filename(title)
+    
+    # 查找第一个二级标题
+    for line in lines:
+        line = line.strip()
+        if line.startswith('## '):
+            title = line[3:].strip()
+            title = re.sub(r'[#*`\[\]()]', '', title).strip()
+            if title:
+                return sanitize_filename(title)
+    
+    # 使用第一行非空文本
+    for line in lines:
+        line = line.strip()
+        if line and not line.startswith('#'):
+            title = re.sub(r'[#*`\[\]()]', '', line).strip()
+            if title:
+                # 限制长度
+                title = title[:50]
+                return sanitize_filename(title)
+    
+    return "公文格式文档"
+
+
+def sanitize_filename(filename):
+    """
+    清理文件名，移除不合法字符
+    """
+    # 移除Windows和Unix不允许的文件名字符
+    filename = re.sub(r'[<>:"/\\|?*]', '', filename)
+    # 移除前后空格
+    filename = filename.strip()
+    # 限制长度
+    if len(filename) > 50:
+        filename = filename[:50]
+    # 如果清理后为空，返回默认名称
+    return filename if filename else "公文格式文档"
+
+
+def read_docx_as_markdown(docx_path):
+    """
+    读取docx文件内容，假设其中包含markdown格式的文本
+    """
+    doc = Document(docx_path)
+    content = []
+    for paragraph in doc.paragraphs:
+        content.append(paragraph.text)
+    return '\n'.join(content)
+
+
 def main():
     # 简洁的头部
     st.markdown("""
@@ -271,12 +338,12 @@ def main():
     # 标签页1: 粘贴文本（默认）
     with tab1:
         st.markdown("")
-        st.info("💡 提示：可直接在下方文本框中粘贴或输入Markdown内容")
+        st.info("💡 提示：可直接在下方文本框中粘贴或输入Markdown内容。标题会自动添加序号（一、二、三、或（一）（二）（三））")
         
         markdown_text = st.text_area(
             "Markdown内容",
             height=450,
-            placeholder="# 关于加强公文格式管理的通知\n\n## 一、总体要求\n\n各单位要高度重视公文格式规范化工作，严格按照标准执行。\n\n## 二、具体措施\n\n### 1. 字体要求\n\n正文采用**仿宋_GB2312字体**，字号为三号（16磅）。\n\n### 2. 页面设置\n\n页边距设置如下：\n- 上边距：37毫米\n- 下边距：35毫米",
+            placeholder="# 关于加强公文格式管理的通知\n\n## 总体要求\n\n各单位要高度重视公文格式规范化工作，严格按照标准执行。\n\n## 具体措施\n\n### 字体要求\n\n正文采用**仿宋_GB2312字体**，字号为三号（16磅）。\n\n### 页面设置\n\n页边距设置如下：\n- 上边距：37毫米\n- 下边距：35毫米\n\n注：标题会自动添加序号（一、二、三、或（一）（二）（三））",
             help="支持标准Markdown语法，包括标题、列表、表格、加粗、斜体等",
             label_visibility="collapsed"
         )
@@ -295,6 +362,10 @@ def main():
                     st.error("❌ 请输入Markdown文本")
                 else:
                     with st.spinner("正在转换中..."):
+                        # 从内容中提取标题作为文件名
+                        doc_title = extract_title_from_markdown(markdown_text)
+                        download_filename = f"{doc_title}.docx"
+                        
                         # 创建临时文件
                         with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as tmp_input:
                             tmp_input.write(markdown_text)
@@ -310,13 +381,13 @@ def main():
                             with open(output_path, 'rb') as f:
                                 docx_data = f.read()
                             
-                            st.success("✅ 转换成功！")
+                            st.success(f"✅ 转换成功！文件名：{download_filename}")
                             
                             # 直接下载，不需要再点击
                             st.download_button(
                                 label="📥 下载Word文档",
                                 data=docx_data,
-                                file_name="公文格式文档.docx",
+                                file_name=download_filename,
                                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                                 use_container_width=True
                             )
@@ -335,13 +406,13 @@ def main():
         st.markdown("""
         <div style="text-align: center; margin: 1rem 0; padding: 1rem; background: #ebf8ff; border-radius: 8px;">
             <p style="margin: 0; color: #2c5282; font-size: 0.95rem;">📁 拖拽文件到下方区域，或点击选择文件</p>
-            <p style="margin: 0.3rem 0 0 0; color: #718096; font-size: 0.85rem;">支持 .md、.markdown、.txt 格式</p>
+            <p style="margin: 0.3rem 0 0 0; color: #718096; font-size: 0.85rem;">支持 .md、.markdown、.txt、.docx 格式</p>
         </div>
         """, unsafe_allow_html=True)
         
         uploaded_file = st.file_uploader(
             "选择文件",
-            type=['md', 'markdown', 'txt'],
+            type=['md', 'markdown', 'txt', 'docx'],
             label_visibility="collapsed"
         )
         
@@ -352,11 +423,47 @@ def main():
             
             if st.button("🚀 转换并下载", key="convert_file", use_container_width=True):
                 with st.spinner("正在转换中..."):
-                    # 创建临时文件
-                    with tempfile.NamedTemporaryFile(mode='wb', suffix='.md', delete=False) as tmp_input:
-                        tmp_input.write(uploaded_file.getvalue())
-                        input_path = tmp_input.name
+                    file_ext = os.path.splitext(uploaded_file.name)[1].lower()
+                    markdown_content = None
                     
+                    # 根据文件类型处理
+                    if file_ext == '.docx':
+                        # 保存临时docx文件
+                        with tempfile.NamedTemporaryFile(mode='wb', suffix='.docx', delete=False) as tmp_docx:
+                            tmp_docx.write(uploaded_file.getvalue())
+                            temp_docx_path = tmp_docx.name
+                        
+                        try:
+                            # 读取docx中的markdown内容
+                            markdown_content = read_docx_as_markdown(temp_docx_path)
+                            
+                            # 保存为md文件
+                            with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as tmp_input:
+                                tmp_input.write(markdown_content)
+                                input_path = tmp_input.name
+                        finally:
+                            # 清理临时docx文件
+                            if os.path.exists(temp_docx_path):
+                                os.remove(temp_docx_path)
+                    else:
+                        # 处理md/txt文件
+                        with tempfile.NamedTemporaryFile(mode='wb', suffix='.md', delete=False) as tmp_input:
+                            tmp_input.write(uploaded_file.getvalue())
+                            input_path = tmp_input.name
+                        
+                        # 读取内容用于提取标题
+                        with open(input_path, 'r', encoding='utf-8') as f:
+                            markdown_content = f.read()
+                    
+                    # 从内容中提取标题作为文件名
+                    if markdown_content:
+                        doc_title = extract_title_from_markdown(markdown_content)
+                    else:
+                        # 如果没有内容，使用原始文件名
+                        doc_title = os.path.splitext(uploaded_file.name)[0]
+                        doc_title = sanitize_filename(doc_title)
+                    
+                    download_filename = f"{doc_title}.docx"
                     output_path = input_path.replace('.md', '.docx')
                     
                     # 转换文档
@@ -367,13 +474,13 @@ def main():
                         with open(output_path, 'rb') as f:
                             docx_data = f.read()
                         
-                        st.success("✅ 转换成功！")
+                        st.success(f"✅ 转换成功！文件名：{download_filename}")
                         
                         # 直接下载
                         st.download_button(
                             label="📥 下载Word文档",
                             data=docx_data,
-                            file_name="公文格式文档.docx",
+                            file_name=download_filename,
                             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                             use_container_width=True
                         )
@@ -391,9 +498,10 @@ def main():
     # 简洁页脚
     st.markdown("""
     <div style="text-align: center; padding: 2rem 0 1rem 0; color: #a0aec0; font-size: 0.85rem;">
+        <p style="margin: 0.5rem 0;">✨ 自动添加标题序号：## 标题 → 一、标题 | ### 标题 → （一）标题 | #### 标题 → 1. 标题</p>
         <p style="margin: 0.5rem 0;">支持标题、表格、列表、加粗、斜体 | 符合 GB/T 9704-2012 标准</p>
         <p style="margin: 0.5rem 0;">
-            <a href="https://github.com/liusai0820/md2govdoc" target="_blank" style="color: #3182ce; text-decoration: none;">源码</a>
+            <a href="https://github.com/liusai0820/md2govdoc" target="_blank" style="color: #3182ce; text-decoration: none;">Github</a>
         </p>
     </div>
     """, unsafe_allow_html=True)
