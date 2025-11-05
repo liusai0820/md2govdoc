@@ -304,11 +304,14 @@
         }
 
         .syntax-list li {
-            padding: 10px 0;
+            padding: 8px 0;
             color: var(--text-secondary);
             font-size: 13px;
-            line-height: 1.6;
+            line-height: 1.4;
             border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .syntax-list li:last-child {
@@ -322,12 +325,11 @@
             font-family: 'SF Mono', 'Monaco', monospace;
             font-size: 12px;
             color: var(--primary-color);
-            margin-right: 8px;
         }
 
         .syntax-list .arrow {
             color: var(--text-secondary);
-            margin: 0 8px;
+            margin: 0 6px;
         }
 
         .footer {
@@ -464,10 +466,10 @@
             <aside class="sidebar">
                 <h3>支持的 Markdown 语法</h3>
                 <ul class="syntax-list">
-                    <li><code>#</code><span class="arrow">→</span>主标题（方正小标宋 22磅 居中）</li>
-                    <li><code>##</code><span class="arrow">→</span>一级标题（黑体 16磅，自动序号：一、二、三）</li>
-                    <li><code>###</code><span class="arrow">→</span>二级标题（楷体 16磅，自动序号：（一）（二））</li>
-                    <li><code>####</code><span class="arrow">→</span>三级标题（楷体 16磅，自动序号：1. 2. 3.）</li>
+                    <li><code>#</code><span class="arrow">→</span>主标题（小标宋 22磅 居中）</li>
+                    <li><code>##</code><span class="arrow">→</span>一级标题（黑体 16磅，序号：一、二）</li>
+                    <li><code>###</code><span class="arrow">→</span>二级标题（楷体 16磅，序号：（一））</li>
+                    <li><code>####</code><span class="arrow">→</span>三级标题（楷体 16磅，序号：1.）</li>
                     <li><code>**文本**</code><span class="arrow">→</span>加粗</li>
                     <li><code>*文本*</code><span class="arrow">→</span>斜体</li>
                     <li><code>- 项目</code><span class="arrow">→</span>列表项</li>
