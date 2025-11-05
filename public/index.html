@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>公文格式转换器</title>
-    <meta name="description" content="把AI输出一键转换成标准公文格式，支持Markdown转Word，符合GB/T 9704-2012标准">
+    <meta name="description" content="Markdown转标准公文格式，符合GB/T 9704-2012标准">
     <style>
         * {
             margin: 0;
@@ -14,79 +14,37 @@
 
         :root {
             --primary-color: #007AFF;
-            --secondary-color: #5856D6;
             --success-color: #34C759;
             --error-color: #FF3B30;
-            --warning-color: #FF9500;
             --bg-primary: #FFFFFF;
-            --bg-secondary: #F5F5F7;
+            --bg-secondary: #F9F9FB;
             --text-primary: #1D1D1F;
             --text-secondary: #86868B;
-            --border-color: #D2D2D7;
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --border-color: #E5E5E7;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", 
                          "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-            background: linear-gradient(180deg, #F5F5F7 0%, #FFFFFF 100%);
+            background: var(--bg-secondary);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
             color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            padding: 60px 20px;
         }
 
         .container {
-            background: var(--bg-primary);
-            border-radius: 20px;
-            box-shadow: var(--shadow-lg);
-            max-width: 1400px;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        .main-layout {
-            display: flex;
-            gap: 32px;
-            padding: 0 40px 40px;
-        }
-
-        .main-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .sidebar {
-            width: 360px;
-            flex-shrink: 0;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .header {
             text-align: center;
-            padding: 48px 40px 32px;
-            background: linear-gradient(180deg, rgba(0, 122, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
-        }
-
-        .header-icon {
-            font-size: 56px;
-            margin-bottom: 16px;
-            display: inline-block;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            margin-bottom: 48px;
         }
 
         .header h1 {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 12px;
@@ -94,60 +52,43 @@
         }
 
         .header p {
-            font-size: 17px;
+            font-size: 16px;
             color: var(--text-secondary);
             font-weight: 400;
-            line-height: 1.5;
         }
 
-        .badges {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 20px;
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 40px;
+            align-items: start;
         }
 
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            background: rgba(0, 122, 255, 0.08);
-            color: var(--primary-color);
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .content {
-            /* padding moved to main-layout */
+        .main-content {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 32px;
+            border: 1px solid var(--border-color);
         }
 
         .tabs {
             display: flex;
-            gap: 8px;
+            gap: 0;
             margin-bottom: 32px;
-            padding: 4px;
-            background: var(--bg-secondary);
-            border-radius: 12px;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .tab {
-            flex: 1;
-            padding: 12px 20px;
-            background: transparent;
+            padding: 12px 24px;
+            background: none;
             border: none;
             color: var(--text-secondary);
             font-size: 15px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
         }
 
         .tab:hover {
@@ -155,9 +96,8 @@
         }
 
         .tab.active {
-            background: var(--bg-primary);
             color: var(--primary-color);
-            box-shadow: var(--shadow-sm);
+            border-bottom-color: var(--primary-color);
         }
 
         .tab-content {
@@ -166,73 +106,40 @@
 
         .tab-content.active {
             display: block;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         .upload-area {
             border: 2px dashed var(--border-color);
-            border-radius: 16px;
+            border-radius: 8px;
             padding: 60px 20px;
             text-align: center;
-            transition: all 0.3s ease;
             cursor: pointer;
             background: var(--bg-secondary);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .upload-area::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(0, 122, 255, 0.05) 0%, rgba(88, 86, 214, 0.05) 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .upload-area:hover::before {
-            opacity: 1;
+            transition: all 0.2s ease;
         }
 
         .upload-area:hover {
             border-color: var(--primary-color);
-            transform: translateY(-2px);
-        }
-
-        .upload-area.dragover {
-            border-color: var(--primary-color);
-            background: rgba(0, 122, 255, 0.05);
+            background: rgba(0, 122, 255, 0.03);
         }
 
         .upload-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            position: relative;
-            z-index: 1;
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            opacity: 0.5;
         }
 
         .upload-text {
             color: var(--text-primary);
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 500;
             margin-bottom: 8px;
-            position: relative;
-            z-index: 1;
         }
 
         .upload-hint {
             color: var(--text-secondary);
             font-size: 14px;
-            position: relative;
-            z-index: 1;
         }
 
         .file-input {
@@ -241,14 +148,14 @@
 
         textarea {
             width: 100%;
-            min-height: 360px;
-            padding: 20px;
+            min-height: 400px;
+            padding: 16px;
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            font-size: 15px;
+            border-radius: 8px;
+            font-size: 14px;
             font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
             resize: vertical;
-            transition: all 0.3s ease;
+            transition: border-color 0.2s ease;
             background: var(--bg-secondary);
             color: var(--text-primary);
             line-height: 1.6;
@@ -257,33 +164,24 @@
         textarea:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
             background: var(--bg-primary);
-        }
-
-        textarea::placeholder {
-            color: var(--text-secondary);
         }
 
         .button-group {
             display: flex;
             gap: 12px;
-            margin-top: 24px;
+            margin-top: 20px;
         }
 
         .btn {
             flex: 1;
-            padding: 14px 24px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            transition: all 0.2s ease;
         }
 
         .btn-primary {
@@ -293,92 +191,63 @@
 
         .btn-primary:hover:not(:disabled) {
             background: #0051D5;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
-        }
-
-        .btn-primary:active:not(:disabled) {
-            transform: translateY(0);
         }
 
         .btn-primary:disabled {
             background: var(--border-color);
             color: var(--text-secondary);
             cursor: not-allowed;
-            transform: none;
         }
 
         .btn-secondary {
             background: var(--bg-secondary);
             color: var(--text-primary);
+            border: 1px solid var(--border-color);
         }
 
         .btn-secondary:hover {
-            background: #E8E8ED;
+            background: #F0F0F2;
         }
 
         .selected-file {
-            margin-top: 20px;
-            padding: 16px 20px;
-            background: rgba(0, 122, 255, 0.05);
-            border: 1px solid rgba(0, 122, 255, 0.2);
-            border-radius: 12px;
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
         }
 
         .file-info {
             display: flex;
             align-items: center;
             gap: 12px;
-        }
-
-        .file-icon {
-            font-size: 24px;
-        }
-
-        .file-name {
             color: var(--text-primary);
-            font-weight: 500;
-            font-size: 15px;
+            font-size: 14px;
         }
 
         .remove-file {
             background: none;
             border: none;
             color: var(--text-secondary);
-            font-size: 20px;
             cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 6px;
-            transition: all 0.2s ease;
+            padding: 4px;
+            font-size: 18px;
+            line-height: 1;
         }
 
         .remove-file:hover {
             color: var(--error-color);
-            background: rgba(255, 59, 48, 0.1);
         }
 
         .status-message {
-            margin-top: 20px;
-            padding: 16px 20px;
-            border-radius: 12px;
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 8px;
             display: none;
-            font-size: 15px;
-            font-weight: 500;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            font-size: 14px;
         }
 
         .status-message.success {
@@ -405,8 +274,8 @@
         }
 
         .spinner {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             border: 2px solid rgba(0, 122, 255, 0.3);
             border-top-color: var(--primary-color);
             border-radius: 50%;
@@ -417,65 +286,55 @@
             to { transform: rotate(360deg); }
         }
 
-        .info-card {
-            padding: 24px;
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
+        .sidebar {
             position: sticky;
-            top: 40px;
+            top: 60px;
         }
 
-        .info-card h3 {
-            color: var(--text-primary);
-            font-size: 17px;
+        .sidebar h3 {
+            font-size: 15px;
             font-weight: 600;
+            color: var(--text-primary);
             margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
-        .info-card ul {
+        .syntax-list {
             list-style: none;
             padding: 0;
         }
 
-        .info-card li {
+        .syntax-list li {
             padding: 10px 0;
             color: var(--text-secondary);
             font-size: 13px;
             line-height: 1.6;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .info-card li::before {
-            content: '•';
-            color: var(--primary-color);
-            font-weight: bold;
-            font-size: 18px;
-            line-height: 1.2;
-            flex-shrink: 0;
+        .syntax-list li:last-child {
+            border-bottom: none;
         }
 
-        .info-card code {
-            background: var(--bg-primary);
-            padding: 3px 8px;
-            border-radius: 6px;
+        .syntax-list code {
+            background: var(--bg-secondary);
+            padding: 2px 6px;
+            border-radius: 4px;
             font-family: 'SF Mono', 'Monaco', monospace;
             font-size: 12px;
             color: var(--primary-color);
-            border: 1px solid var(--border-color);
-            white-space: nowrap;
+            margin-right: 8px;
+        }
+
+        .syntax-list .arrow {
+            color: var(--text-secondary);
+            margin: 0 8px;
         }
 
         .footer {
             text-align: center;
-            padding: 32px 40px;
+            margin-top: 60px;
+            padding-top: 32px;
             border-top: 1px solid var(--border-color);
-            background: var(--bg-secondary);
         }
 
         .footer p {
@@ -487,52 +346,38 @@
         .footer a {
             color: var(--primary-color);
             text-decoration: none;
-            font-weight: 500;
-            transition: opacity 0.2s ease;
         }
 
         .footer a:hover {
-            opacity: 0.7;
+            text-decoration: underline;
         }
 
-        @media (max-width: 1200px) {
+        @media (max-width: 1024px) {
             .main-layout {
-                flex-direction: column;
+                grid-template-columns: 1fr;
+                gap: 32px;
             }
 
             .sidebar {
-                width: 100%;
-            }
-
-            .info-card {
                 position: static;
+                background: var(--bg-primary);
+                border-radius: 12px;
+                padding: 24px;
+                border: 1px solid var(--border-color);
             }
         }
 
         @media (max-width: 768px) {
             body {
-                padding: 20px 16px;
-            }
-
-            .container {
-                border-radius: 16px;
-            }
-
-            .header {
-                padding: 32px 24px 24px;
+                padding: 40px 16px;
             }
 
             .header h1 {
-                font-size: 26px;
+                font-size: 28px;
             }
 
-            .header p {
-                font-size: 15px;
-            }
-
-            .main-layout {
-                padding: 0 24px 24px;
-                gap: 24px;
+            .main-content {
+                padding: 24px;
             }
 
             .button-group {
@@ -540,38 +385,7 @@
             }
 
             textarea {
-                min-height: 280px;
-                font-size: 14px;
-            }
-
-            .footer {
-                padding: 24px;
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-primary: #1C1C1E;
-                --bg-secondary: #2C2C2E;
-                --text-primary: #F5F5F7;
-                --text-secondary: #98989D;
-                --border-color: #38383A;
-            }
-
-            body {
-                background: linear-gradient(180deg, #000000 0%, #1C1C1E 100%);
-            }
-
-            .upload-area {
-                background: var(--bg-secondary);
-            }
-
-            textarea {
-                background: var(--bg-secondary);
-            }
-
-            textarea:focus {
-                background: var(--bg-primary);
+                min-height: 300px;
             }
         }
     </style>
@@ -579,57 +393,49 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="header-icon">📄</div>
             <h1>公文格式转换器</h1>
-            <p>把AI输出一键转换成标准公文，省去排版烦恼</p>
-            <div class="badges">
-                <span class="badge">✨ 自动序号</span>
-                <span class="badge">📋 GB/T 9704-2012</span>
-                <span class="badge">⚡️ 秒开无等待</span>
-            </div>
+            <p>Markdown 转标准公文格式 · 符合 GB/T 9704-2012 标准</p>
         </div>
 
         <div class="main-layout">
             <div class="main-content">
                 <div class="tabs">
-                    <button class="tab active" onclick="switchTab('upload')">
-                        <span>📁</span>
-                        <span>上传文件</span>
-                    </button>
-                    <button class="tab" onclick="switchTab('text')">
-                        <span>📝</span>
-                        <span>粘贴文本</span>
-                    </button>
+                    <button class="tab active" onclick="switchTab('upload')">上传文件</button>
+                    <button class="tab" onclick="switchTab('text')">粘贴文本</button>
                 </div>
 
-                <!-- 上传文件标签页 -->
+                <!-- 上传文件 -->
                 <div id="upload-tab" class="tab-content active">
                     <div class="upload-area" id="uploadArea">
-                        <div class="upload-icon">📁</div>
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                        </svg>
                         <div class="upload-text">点击选择或拖拽文件到此处</div>
-                        <div class="upload-hint">支持 .md、.markdown、.txt、.docx 格式</div>
+                        <div class="upload-hint">支持 .md、.txt、.docx 格式</div>
                         <input type="file" id="fileInput" class="file-input" accept=".md,.markdown,.txt,.docx">
                     </div>
 
                     <div id="selectedFile" class="selected-file" style="display: none;">
                         <div class="file-info">
-                            <span class="file-icon">📄</span>
-                            <span class="file-name" id="fileName"></span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                                <polyline points="13 2 13 9 20 9"/>
+                            </svg>
+                            <span id="fileName"></span>
                         </div>
-                        <button class="remove-file" onclick="removeFile()">✕</button>
+                        <button class="remove-file" onclick="removeFile()">×</button>
                     </div>
 
                     <div class="button-group">
                         <button class="btn btn-primary" id="convertFileBtn" onclick="convertFile()" disabled>
-                            <span>🚀</span>
-                            <span>转换并下载</span>
+                            转换并下载
                         </button>
                     </div>
                 </div>
 
-                <!-- 粘贴文本标签页 -->
+                <!-- 粘贴文本 -->
                 <div id="text-tab" class="tab-content">
-                    <textarea id="markdownText" placeholder="在此粘贴或输入Markdown文本...
+                    <textarea id="markdownText" placeholder="在此粘贴或输入 Markdown 文本...
 
 示例：
 # 关于加强公文格式管理的通知
@@ -644,17 +450,11 @@
 
 正文采用**仿宋_GB2312字体**，字号为三号（16磅）。
 
-注：标题会自动添加序号（一、二、三、或（一）（二）（三））"></textarea>
+注：标题会自动添加序号"></textarea>
 
                     <div class="button-group">
-                        <button class="btn btn-secondary" onclick="clearText()">
-                            <span>🗑️</span>
-                            <span>清空</span>
-                        </button>
-                        <button class="btn btn-primary" onclick="convertText()">
-                            <span>🚀</span>
-                            <span>转换并下载</span>
-                        </button>
+                        <button class="btn btn-secondary" onclick="clearText()">清空</button>
+                        <button class="btn btn-primary" onclick="convertText()">转换并下载</button>
                     </div>
                 </div>
 
@@ -662,27 +462,26 @@
             </div>
 
             <aside class="sidebar">
-                <div class="info-card">
-                    <h3>📝 支持的Markdown语法</h3>
-                    <ul>
-                        <li><code>#</code> 主标题 → 方正小标宋简体 22磅 加粗 居中</li>
-                        <li><code>##</code> 一级标题 → 黑体 16磅（自动添加：一、二、三、）</li>
-                        <li><code>###</code> 二级标题 → 楷体 16磅 加粗（自动添加：（一）（二）（三））</li>
-                        <li><code>####</code> 三级标题 → 楷体 16磅（自动添加：1. 2. 3.）</li>
-                        <li><code>**文本**</code> 加粗 | <code>*文本*</code> 斜体 | <code>- 列表</code> 列表项</li>
-                    </ul>
-                </div>
+                <h3>支持的 Markdown 语法</h3>
+                <ul class="syntax-list">
+                    <li><code>#</code><span class="arrow">→</span>主标题（方正小标宋 22磅 居中）</li>
+                    <li><code>##</code><span class="arrow">→</span>一级标题（黑体 16磅，自动序号：一、二、三）</li>
+                    <li><code>###</code><span class="arrow">→</span>二级标题（楷体 16磅，自动序号：（一）（二））</li>
+                    <li><code>####</code><span class="arrow">→</span>三级标题（楷体 16磅，自动序号：1. 2. 3.）</li>
+                    <li><code>**文本**</code><span class="arrow">→</span>加粗</li>
+                    <li><code>*文本*</code><span class="arrow">→</span>斜体</li>
+                    <li><code>- 项目</code><span class="arrow">→</span>列表项</li>
+                </ul>
             </aside>
         </div>
 
         <div class="footer">
-            <p>完全免费 · 前端托管在Vercel · 后端API在Render</p>
-            <p><a href="https://github.com/liusai0820/md2govdoc" target="_blank">GitHub源码</a></p>
+            <p>完全免费 · 前端托管在 Vercel · 后端 API 在 Render</p>
+            <p><a href="https://github.com/liusai0820/md2govdoc" target="_blank">GitHub 源码</a></p>
         </div>
     </div>
 
     <script>
-        // API配置
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:5000'
             : 'https://hmd2govdoc-api.onrender.com';
@@ -693,7 +492,7 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             
-            event.target.closest('.tab').classList.add('active');
+            event.target.classList.add('active');
             document.getElementById(tab + '-tab').classList.add('active');
             
             hideStatus();
@@ -706,16 +505,16 @@
 
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
-            uploadArea.classList.add('dragover');
+            uploadArea.style.borderColor = 'var(--primary-color)';
         });
 
         uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
+            uploadArea.style.borderColor = 'var(--border-color)';
         });
 
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
-            uploadArea.classList.remove('dragover');
+            uploadArea.style.borderColor = 'var(--border-color)';
             
             const files = e.dataTransfer.files;
             if (files.length > 0) {
@@ -797,13 +596,13 @@
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
 
-                    showStatus('✅ 转换成功！文件已开始下载', 'success');
+                    showStatus('转换成功，文件已开始下载', 'success');
                 } else {
                     const error = await response.json();
-                    showStatus('❌ ' + (error.error || '转换失败'), 'error');
+                    showStatus(error.error || '转换失败', 'error');
                 }
             } catch (error) {
-                showStatus('❌ 网络错误：' + error.message, 'error');
+                showStatus('网络错误：' + error.message, 'error');
             }
         }
 
@@ -811,7 +610,7 @@
             const text = document.getElementById('markdownText').value.trim();
             
             if (!text) {
-                showStatus('❌ 请输入Markdown文本', 'error');
+                showStatus('请输入 Markdown 文本', 'error');
                 return;
             }
 
@@ -847,13 +646,13 @@
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
 
-                    showStatus('✅ 转换成功！文件已开始下载', 'success');
+                    showStatus('转换成功，文件已开始下载', 'success');
                 } else {
                     const error = await response.json();
-                    showStatus('❌ ' + (error.error || '转换失败'), 'error');
+                    showStatus(error.error || '转换失败', 'error');
                 }
             } catch (error) {
-                showStatus('❌ 网络错误：' + error.message, 'error');
+                showStatus('网络错误：' + error.message, 'error');
             }
         }
     </script>
